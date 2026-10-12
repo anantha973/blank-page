@@ -1,17 +1,695 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Assignment B</title>
-  <style>
-    body {
-      background-color: #ffffff;
-      margin: 0;
-      padding: 0;
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>DocIndia — Heuristic Evaluation · Part B</title>
+<meta content="Heuristic evaluation of DocIndia's doctor-finding and appointment-booking journeys, with ten findings, severity rationale, recommendations and evidence." name="description"/>
+<style>:root {
+  color-scheme: light;
+  --ink: #171b20;
+  --body: #4e5963;
+  --muted: #717b85;
+  --faint: #8c959e;
+  --line: #dfe4e8;
+  --line-strong: #c8d0d7;
+  --paper: #fff;
+  --canvas: #fff;
+  --accent: #1769e8;
+  --accent-soft: #eef5ff;
+  --critical-bg: #ffe8e8;
+  --critical-line: #f4caca;
+  --critical-fg: #b52e2e;
+  --major-bg: #fff0df;
+  --major-line: #efd4b2;
+  --major-fg: #965500;
+  --work-bg: #fff7c9;
+  --work-line: #eadf9e;
+  --work-fg: #756000;
+  --irritant-bg: #eaf3ff;
+  --irritant-line: #cbdcf3;
+  --irritant-fg: #3e6ea8;
+  --cosmetic-bg: #f1f3f5;
+  --cosmetic-line: #dfe3e7;
+  --cosmetic-fg: #58626c;
+  --content-max: 1400px;
+  --gutter: clamp(20px, 3vw, 42px);
+  --section-space: clamp(38px, 4vw, 58px);
+  --radius: 3px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+body {
+  margin: 0; background: var(--canvas); color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility; overflow-wrap: break-word;
+}
+::selection { background: #dceaff; }
+a { color: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+.icon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.icon { display: inline-block; flex: 0 0 auto; width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; fill: none; vertical-align: -3px; }
+.icon-sm { width: 14px; height: 14px; }
+.icon-xs { width: 13px; height: 13px; }
+
+/* Shared site chrome: full-width sticky bar, centered content alignment. */
+.site-header {
+  position: sticky; top: 0; z-index: 30; width: 100%;
+  background: rgba(255,255,255,.96); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.header-inner {
+  width: 100%; max-width: var(--content-max); margin: 0 auto; padding: 0 var(--gutter);
+  min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 28px;
+}
+.site-brand { display: flex; align-items: center; gap: 10px; min-width: 0; text-decoration: none; color: var(--ink); }
+.site-brand > .icon { width: 17px; height: 17px; color: var(--accent); }
+.site-brand b { font-size: 12px; font-weight: 850; letter-spacing: -.025em; white-space: nowrap; }
+.site-brand span { color: var(--muted); font-size: 11px; padding-left: 12px; border-left: 1px solid var(--line); white-space: nowrap; }
+.global-nav { display: flex; align-items: center; justify-content: flex-end; gap: clamp(11px, 1.4vw, 20px); min-width: 0; }
+.global-nav a { color: var(--muted); font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: color .16s ease; }
+.global-nav a:hover, .global-nav a.active { color: var(--accent); }
+
+/* Centered maximum-width page container, matching the Systems Thinking submission. */
+.page { width: 100%; max-width: var(--content-max); margin: 0 auto; padding: 0 var(--gutter) 82px; }
+main { min-width: 0; }
+.hero, .section { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.hero { padding: clamp(42px, 4.5vw, 64px) 0 42px; border-bottom: 1px solid var(--line); }
+.eyebrow, .kicker, .finding-no { text-transform: uppercase; letter-spacing: .13em; font-weight: 850; color: var(--accent); }
+.eyebrow { font-size: 11px; line-height: 1.5; }
+h1 { width: 100%; max-width: 1000px; font-size: clamp(43px, 5vw, 68px); line-height: .99; letter-spacing: -.065em; margin: 15px 0 18px; }
+.lede { max-width: 88ch; color: var(--body); font-size: 16px; line-height: 1.78; margin: 0; }
+.meta {
+  display: grid; grid-template-columns: 1fr .95fr 1.45fr 2.2fr 1.3fr 1.25fr;
+  margin-top: 30px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.meta .chip {
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 5px;
+  min-width: 0; padding: 14px 14px 14px 0; background: transparent; border: 0; border-right: 1px solid var(--line);
+  border-radius: 0; color: var(--ink); font-size: 13px; font-weight: 650; line-height: 1.45;
+}
+.meta .chip:not(:first-child) { padding-left: 14px; }
+.meta .chip:last-child { border-right: 0; }
+.meta-label { display: inline-flex; align-items: center; gap: 6px; color: var(--faint); font-size: 10px; line-height: 1.3; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.meta-value { color: var(--ink); font-size: 13px; font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; }
+.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 13px; background: #fff; border: 1px solid var(--line-strong); border-radius: var(--radius); text-decoration: none; font-size: 12px; font-weight: 800; transition: border-color .16s ease, color .16s ease, background .16s ease; }
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: #0d5bcf; color: #fff; }
+
+.section { padding: var(--section-space) 0 calc(var(--section-space) + 2px); border-bottom: 1px solid var(--line); scroll-margin-top: 84px; }
+.section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.kicker { font-size: 11px; line-height: 1.45; }
+.section h2 { margin: 8px 0 0; font-size: clamp(30px, 2.8vw, 40px); line-height: 1.06; letter-spacing: -.047em; }
+.section-sub { max-width: 90ch; margin: 11px 0 0; color: var(--body); font-size: 14px; line-height: 1.78; }
+.summary-grid, .scenario-grid, .lesson-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--line); }
+.summary-grid.three, .lesson-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card { min-width: 0; padding: 20px 22px 20px 0; background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.summary-grid .card:nth-child(2n), .scenario-grid .card:nth-child(2n) { padding-left: 22px; border-left: 1px solid var(--line); }
+.scenario-grid .scenario-full { grid-column: 1 / -1; padding-left: 0 !important; border-left: 0 !important; }
+.summary-grid.three .card:not(:nth-child(3n+1)), .lesson-grid .card:not(:nth-child(3n+1)) { padding-left: 22px; border-left: 1px solid var(--line); }
+.card h3 { margin: 0 0 8px; font-size: 16px; line-height: 1.35; letter-spacing: -.02em; }
+.card p { margin: 0; color: var(--body); font-size: 14px; line-height: 1.78; }
+.card strong { color: var(--ink); }
+.flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; margin-top: 26px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.flow .step { min-width: 0; min-height: 118px; padding: 17px 14px 19px 0; border-right: 1px solid var(--line); }
+.flow .step:not(:first-child) { padding-left: 14px; }
+.flow .step:last-child { border-right: 0; }
+.flow .num { color: var(--accent); font-size: 11px; line-height: 1.4; letter-spacing: .09em; font-weight: 900; }
+.flow strong { display: block; margin-top: 8px; font-size: 14px; line-height: 1.35; }
+.flow span { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+/* Evaluation method and score legend. */
+.method { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 3.5vw, 48px); }
+.formula { display: flex; flex-direction: column; justify-content: center; min-height: 150px; padding: 22px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.formula .big { color: var(--accent); font-size: clamp(24px, 2.4vw, 34px); line-height: 1.18; font-weight: 900; letter-spacing: -.045em; }
+.formula p { margin: 9px 0 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+.scorebox { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.badge, .severity-badge { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 5px 8px; border: 1px solid transparent; border-radius: 3px; font-size: 11px; line-height: 1.3; font-weight: 800; letter-spacing: 0; text-transform: none; white-space: nowrap; }
+.badge.critical, .severity-badge.critical { color: var(--critical-fg); background: var(--critical-bg); border-color: var(--critical-line); }
+.badge.major, .severity-badge.major { color: var(--major-fg); background: var(--major-bg); border-color: var(--major-line); }
+.badge.work, .severity-badge.work { color: var(--work-fg); background: var(--work-bg); border-color: var(--work-line); }
+.badge.cosmetic, .severity-badge.cosmetic { color: var(--cosmetic-fg); background: var(--cosmetic-bg); border-color: var(--cosmetic-line); }
+.badge.irritant, .severity-badge.irritant { color: var(--irritant-fg); background: var(--irritant-bg); border-color: var(--irritant-line); }
+.severity-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.severity-step { min-width: 0; padding: 15px 14px 16px 0; border-right: 1px solid var(--line); }
+.severity-step:not(:first-child) { padding-left: 14px; }
+.severity-step:last-child { border-right: 0; }
+.severity-step .n { font-size: 19px; font-weight: 900; letter-spacing: -.03em; }
+.severity-step .t { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.severity-step.critical .n { color: var(--critical-fg); }
+.severity-step.major .n { color: var(--major-fg); }
+.severity-step.work .n { color: var(--work-fg); }
+.severity-step.irritant .n { color: var(--irritant-fg); }
+.severity-step.cosmetic .n { color: var(--cosmetic-fg); }
+.severity-table { display: grid; grid-template-columns: minmax(130px, .95fr) repeat(3, minmax(0, 1fr)); margin-top: 24px; border-top: 1px solid var(--line-strong); border-left: 1px solid var(--line-strong); }
+.severity-table > div { min-width: 0; padding: 12px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #fff; font-size: 12px; line-height: 1.5; }
+.severity-table .head { background: #f4f6f8; color: #58626c; font-size: 10px; line-height: 1.4; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+.severity-table .sev-cosmetic { color: var(--cosmetic-fg); background: var(--cosmetic-bg); font-weight: 750; }
+.severity-table .sev-irritant { color: var(--irritant-fg); background: var(--irritant-bg); font-weight: 750; }
+.severity-table .sev-work { color: var(--work-fg); background: var(--work-bg); font-weight: 750; }
+.severity-table .sev-major { color: var(--major-fg); background: var(--major-bg); font-weight: 750; }
+.severity-table .sev-critical { color: var(--critical-fg); background: var(--critical-bg); font-weight: 750; }
+
+/* Findings: sticky left index, single-column evidence and reasoning. */
+.findings-layout { display: grid; grid-template-columns: 205px minmax(0, 1fr); align-items: start; gap: clamp(26px, 3.2vw, 42px); width: 100%; }
+.evidence-index { position: sticky; top: 86px; align-self: start; padding: 2px 20px 22px 0; border-right: 1px solid var(--line); }
+.evidence-index .index-label { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; color: var(--faint); font-size: 10px; line-height: 1.45; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+.evidence-index nav { display: grid; gap: 4px; }
+.evidence-index a { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; gap: 8px; padding: 10px 0; color: #69737d; text-decoration: none; border-bottom: 1px solid transparent; }
+.evidence-index a:hover, .evidence-index a.active { color: var(--accent); }
+.evidence-index a.active .idx { color: var(--accent); }
+.evidence-index .idx { padding-top: 1px; color: var(--faint); font-size: 11px; line-height: 1.45; font-weight: 900; letter-spacing: .06em; }
+.evidence-index b { font-size: 12px; line-height: 1.4; font-weight: 800; }
+.evidence-index small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.45; font-weight: 450; }
+.findings-main { min-width: 0; }
+.findings-intro-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 29%); gap: clamp(22px, 3vw, 38px); padding-bottom: 26px; border-bottom: 1px solid var(--line); }
+.findings-intro-grid .section-head { margin-bottom: 0; }
+.finding { min-width: 0; padding: clamp(36px, 3.5vw, 52px) 0 clamp(40px, 4vw, 58px); border-bottom: 1px solid var(--line); scroll-margin-top: 86px; }
+.finding:first-of-type { padding-top: 34px; }
+.finding-head { display: block; }
+.finding-no { font-size: 11px; line-height: 1.5; }
+.finding h3 { max-width: 1000px; margin: 8px 0 12px; font-size: clamp(27px, 2.2vw, 36px); line-height: 1.12; letter-spacing: -.047em; }
+.finding-intro { max-width: 88ch; margin: 0; color: var(--body); font-size: 15px; line-height: 1.78; }
+.severity-panel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 24px; border: 1px solid var(--line-strong); }
+.metric { min-width: 0; padding: 15px 18px 14px; background: #fff; border-right: 1px solid var(--line); }
+.metric:last-child { border-right: 0; }
+.metric .n { color: var(--ink); font-size: 27px; line-height: 1; font-weight: 900; letter-spacing: -.04em; }
+.metric .l { margin-top: 7px; color: var(--muted); font-size: 11px; line-height: 1.4; font-weight: 850; letter-spacing: .07em; text-transform: uppercase; }
+.metric.severity-cell { display: flex; flex-direction: column; justify-content: center; }
+.metric.severity-cell.critical { background: #fff8f8; }
+.metric.severity-cell.major { background: #fffaf4; }
+.metric.severity-cell.work { background: #fffdf0; }
+.metric.severity-cell.irritant { background: #f8fbff; }
+.metric.severity-cell.cosmetic { background: #fafbfc; }
+.severity-value { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.metric.severity-cell .l { margin-top: 7px; }
+.finding-copy { width: 100%; max-width: 92ch; margin-top: 27px; }
+.label { display: flex; align-items: center; gap: 7px; margin: 22px 0 9px; color: var(--faint); font-size: 11px; line-height: 1.45; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.finding-copy .label:first-child { margin-top: 0; }
+.finding-copy > p { margin: 0; color: var(--body); font-size: 15px; line-height: 1.82; }
+.finding-copy > p strong { color: var(--ink); }
+.why { margin-top: 23px; padding: 16px 18px 17px; border: 1px solid var(--line-strong); background: #fafbfc; }
+.why.why-critical { border-color: var(--critical-line); background: #fffafa; }
+.why.why-major { border-color: var(--major-line); background: #fffaf4; }
+.why.why-work { border-color: var(--work-line); background: #fffdf1; }
+.why.why-irritant { border-color: var(--irritant-line); background: #f8fbff; }
+.why.why-cosmetic { border-color: var(--cosmetic-line); background: #fafbfc; }
+.why-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+.why-heading { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); font-size: 12px; font-weight: 900; letter-spacing: .02em; }
+.why-heading .icon { color: var(--accent); }
+.why p { margin: 0; color: #4f5b65; font-size: 14px; line-height: 1.75; }
+.root-rec { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.smallcard { min-width: 0; padding: 17px 18px 18px; background: #fff; border: 1px solid var(--line-strong); border-radius: 0; }
+.smallcard + .smallcard { padding-left: 18px; border-left: 1px solid var(--line-strong); }
+.smallcard h4 { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; color: var(--accent); font-size: 11px; line-height: 1.45; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
+.smallcard h4 .icon { width: 14px; height: 14px; }
+.smallcard p { margin: 0; color: var(--body); font-size: 14px; line-height: 1.75; }
+.evidence { width: 100%; margin-top: clamp(29px, 3vw, 42px); }
+.evidence .label { margin-top: 0; }
+.video-wrap { width: 100%; border: 1px solid var(--line-strong); border-radius: 0; overflow: hidden; background: #0b0f13; }
+.image-evidence { width: 100%; border: 1px solid var(--line-strong); overflow: hidden; background: #fff; }
+.image-evidence img { display: block; width: 100%; height: auto; }
+video { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 1280 / 700; object-fit: contain; background: #0b0f13; cursor: pointer; }
+.caption { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; background: #fff; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.5; }
+.caption b { color: var(--ink); font-weight: 800; }
+
+.priority-list { display: grid; border-top: 1px solid var(--line); }
+.priority { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); background: transparent; }
+.rank { color: var(--accent); font-size: 14px; font-weight: 900; }
+.priority b { font-size: 14px; line-height: 1.4; }
+.priority span { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.priority .severity-badge { display: inline-flex; margin-top: 0; }
+.footer-note { margin-top: 22px; padding: 15px 16px; border: 1px solid #c9dcf8; background: var(--accent-soft); color: #526174; font-size: 13px; line-height: 1.75; }
+.footer-note b { color: var(--ink); }
+.backtop { position: fixed; right: 22px; bottom: 22px; z-index: 25; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: #fff; color: var(--accent); cursor: pointer; }
+.backtop .icon { width: 17px; height: 17px; }
+
+@media (max-width: 1180px) {
+  :root { --gutter: clamp(18px, 2.4vw, 30px); }
+  .header-inner { gap: 18px; }
+  .global-nav { gap: 12px; }
+  .global-nav a { font-size: 11px; }
+  .meta { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .meta .chip:nth-child(3n) { border-right: 0; }
+  .meta .chip:nth-child(n+4) { border-top: 1px solid var(--line); }
+  .meta .chip:nth-child(4) { padding-left: 0; }
+  .findings-layout { grid-template-columns: 184px minmax(0, 1fr); gap: 26px; }
+  .findings-intro-grid { grid-template-columns: minmax(0, 1fr); }
+  .findings-intro-grid .section-head { margin-bottom: 22px; }
+  .flow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .flow .step:nth-child(3n) { border-right: 0; }
+  .flow .step:nth-child(n+4) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 900px) {
+  .header-inner { min-height: 76px; align-items: flex-start; flex-direction: column; justify-content: center; gap: 7px; padding-block: 10px; }
+  .global-nav { width: 100%; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 3px; scrollbar-width: thin; }
+  .global-nav a { flex: 0 0 auto; font-size: 12px; }
+  .findings-layout { display: flex; flex-direction: column; gap: 0; }
+  .findings-main { display: contents; }
+  .findings-intro-grid { order: -1; }
+  .evidence-index { position: sticky; top: 76px; z-index: 15; width: 100%; margin: 0; padding: 8px 0 7px; border-right: 0; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.97); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .evidence-index .index-label { margin-bottom: 4px; }
+  .evidence-index nav { display: flex; align-items: center; gap: clamp(8px, 2.2vw, 18px); flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+  .evidence-index a { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; padding: 7px 0; }
+  .evidence-index b { display: none; }
+  .evidence-index small { display: none; }
+  .finding { scroll-margin-top: 148px; }
+  .method { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .summary-grid.three, .lesson-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .summary-grid.three .card:not(:nth-child(3n+1)), .lesson-grid .card:not(:nth-child(3n+1)) { padding-left: 0; border-left: 0; }
+  .summary-grid.three .card:nth-child(even), .lesson-grid .card:nth-child(even) { padding-left: 20px; border-left: 1px solid var(--line); }
+}
+@media (max-width: 640px) {
+  :root { --gutter: 17px; --section-space: 36px; }
+  .site-brand span { display: none; }
+  .global-nav { gap: 17px; }
+  .page { padding-bottom: 56px; }
+  .hero { padding-top: 36px; padding-bottom: 30px; }
+  h1 { font-size: clamp(38px, 8vw, 49px); line-height: 1.02; }
+  .lede { font-size: 15px; }
+  .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .meta .chip, .meta .chip:not(:first-child) { padding: 12px 10px 12px 0; border-right: 1px solid var(--line); }
+  .meta .chip:nth-child(2n) { padding-left: 12px; border-right: 0; }
+  .meta .chip:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .meta .chip:nth-child(4) { padding-left: 12px; }
+  .meta .chip:nth-child(3n) { border-right: 1px solid var(--line); }
+  .meta .chip:nth-child(2n) { border-right: 0; }
+  .meta-value { font-size: 12px; }
+  .section { padding-top: 36px; padding-bottom: 38px; }
+  .section h2 { font-size: clamp(29px, 7vw, 34px); }
+  .section-sub { font-size: 14px; }
+  .summary-grid, .summary-grid.three, .scenario-grid, .lesson-grid { grid-template-columns: minmax(0, 1fr); }
+  .summary-grid .card:nth-child(2n), .scenario-grid .card:nth-child(2n), .summary-grid.three .card:not(:nth-child(3n+1)), .lesson-grid .card:not(:nth-child(3n+1)), .summary-grid.three .card:nth-child(even), .lesson-grid .card:nth-child(even) { padding-left: 0; border-left: 0; }
+  .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .flow .step { min-height: 0; padding: 14px 10px 16px 0; }
+  .flow .step:not(:first-child) { padding-left: 10px; }
+  .flow .step:nth-child(3n) { border-right: 1px solid var(--line); }
+  .flow .step:nth-child(2n) { border-right: 0; }
+  .flow .step:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .flow .step:nth-child(2n) { padding-left: 12px; }
+  .flow .step:nth-child(odd) { padding-left: 0; }
+  .flow strong { font-size: 13px; }
+  .flow span { font-size: 12px; }
+  .severity-scale { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .severity-step { border-bottom: 1px solid var(--line); }
+  .severity-table { grid-template-columns: minmax(86px, .95fr) repeat(3, minmax(58px, 1fr)); overflow-x: auto; }
+  .severity-table > div { padding: 8px 6px; font-size: 11px; }
+  .severity-table .head { font-size: 10px; }
+  .findings-intro-grid { padding-bottom: 20px; }
+  .evidence-index nav { gap: 12px; }
+  .evidence-index a { gap: 6px; }
+  .evidence-index b { display: none; }
+  .finding { padding: 34px 0 40px; scroll-margin-top: 148px; }
+  .finding h3 { font-size: clamp(25px, 6.2vw, 31px); }
+  .finding-intro, .finding-copy > p { font-size: 14.5px; }
+  .severity-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .metric { padding: 13px 8px; }
+  .metric .n { font-size: 24px; }
+  .metric .l { font-size: 10px; letter-spacing: .04em; }
+  .severity-value { gap: 6px; }
+  .metric.severity-cell .severity-badge { padding: 4px 6px; font-size: 10px; }
+  .why { padding: 14px; }
+  .why p { font-size: 13.5px; }
+  .root-rec { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .smallcard, .smallcard + .smallcard { padding: 15px; border: 1px solid var(--line-strong); }
+  .caption { align-items: flex-start; padding: 10px 9px; font-size: 11px; }
+  .caption span { text-align: right; }
+  .priority { grid-template-columns: 32px minmax(0, 1fr); gap: 10px; }
+  .priority > .severity-badge { grid-column: 2; justify-self: start; }
+  .backtop { right: 12px; bottom: 12px; }
+}
+@media (max-width: 380px) {
+  .meta { grid-template-columns: minmax(0, 1fr); }
+  .meta .chip, .meta .chip:not(:first-child), .meta .chip:nth-child(2n), .meta .chip:nth-child(4) { padding: 10px 0; border-right: 0; }
+  .meta .chip:nth-child(n+2) { border-top: 1px solid var(--line); }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .flow .step, .flow .step:not(:first-child), .flow .step:nth-child(odd), .flow .step:nth-child(2n) { padding-left: 0; border-right: 0; }
+  .flow .step + .step { border-top: 1px solid var(--line); }
+  .severity-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .metric { padding-inline: 6px; }
+  .metric .l { font-size: 9px; }
+  .metric.severity-cell .severity-badge { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+@media print {
+  .site-header, .evidence-index, .backtop, .hero-actions { display: none !important; }
+  .page { max-width: none; padding: 0 12mm; }
+  .hero { padding-top: 10mm; }
+  .section { padding: 10mm 0; }
+  .finding { break-inside: auto; }
+  .finding-copy > p { max-width: 100%; }
+  video { max-height: 100mm; }
+  .badge, .severity-badge, .severity-table .sev-cosmetic, .severity-table .sev-irritant, .severity-table .sev-work, .severity-table .sev-major, .severity-table .sev-critical { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* Refinement pass: consistent closed cards and predictable evidence navigation. */
+.meta {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 30px;
+  border: 0;
+}
+.meta .chip,
+.meta .chip:not(:first-child),
+.meta .chip:last-child,
+.meta .chip:nth-child(n) {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.meta-value { overflow-wrap: anywhere; text-wrap: balance; }
+
+.summary-grid, .scenario-grid, .lesson-grid {
+  border: 0;
+  gap: 12px;
+}
+.summary-grid + .scenario-grid { margin-top: 12px; }
+.summary-grid .card,
+.summary-grid .card:nth-child(2n),
+.summary-grid.three .card:not(:nth-child(3n+1)),
+.summary-grid.three .card:nth-child(even),
+.scenario-grid .card,
+.scenario-grid .card:nth-child(2n),
+.lesson-grid .card,
+.lesson-grid .card:not(:nth-child(3n+1)),
+.lesson-grid .card:nth-child(even) {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.flow { gap: 10px; border: 0; }
+.flow .step,
+.flow .step:not(:first-child),
+.flow .step:last-child,
+.flow .step:nth-child(3n),
+.flow .step:nth-child(2n),
+.flow .step:nth-child(odd),
+.flow .step:nth-child(n+3),
+.flow .step + .step {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.evidence-index {
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #b8c2cc transparent;
+}
+.evidence-index::-webkit-scrollbar { width: 6px; }
+.evidence-index::-webkit-scrollbar-thumb { background: #b8c2cc; border-radius: 6px; }
+.evidence-index::-webkit-scrollbar-track { background: transparent; }
+
+.finding-copy { max-width: none; }
+.finding-copy > p { max-width: 92ch; }
+.why, .root-rec { width: 100%; max-width: none; }
+.evidence-note { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+
+@media (max-width: 1180px) {
+  .meta { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .evidence-index { max-height: none; overflow: visible; }
+}
+@media (max-width: 640px) {
+  .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 380px) {
+  .meta { grid-template-columns: minmax(0, 1fr); }
+}
+
+
+/* Final metadata treatment: one shared enclosure with dividers between equal-width fields. */
+.meta {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #fff;
+}
+.meta .chip,
+.meta .chip:not(:first-child),
+.meta .chip:last-child,
+.meta .chip:nth-child(n) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 14px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.meta .chip:nth-child(6n) { border-right: 0; }
+.meta-label { line-height: 1.35; }
+.meta-value { display: block; width: 100%; overflow-wrap: anywhere; word-break: normal; text-wrap: pretty; }
+@media (max-width: 1180px) {
+  .meta { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .meta .chip:nth-child(6n) { border-right: 0; }
+  .meta .chip:nth-child(3n) { border-right: 0; }
+  .meta .chip:nth-child(n+4) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 640px) {
+  .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .meta .chip:nth-child(3n) { border-right: 1px solid var(--line); }
+  .meta .chip:nth-child(6n) { border-right: 0; }
+  .meta .chip:nth-child(2n) { border-right: 0; }
+  .meta .chip:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .meta .chip:nth-child(n+4) { border-top: 1px solid var(--line); }
+  .meta .chip:nth-child(n+4):nth-child(-n+6) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 380px) {
+  .meta { grid-template-columns: minmax(0, 1fr); }
+  .meta .chip,
+  .meta .chip:not(:first-child),
+  .meta .chip:nth-child(n) { border-right: 0; }
+  .meta .chip:nth-child(n+2) { border-top: 1px solid var(--line); }
+}
+
+/* Final print pagination guardrails. */
+
+@media print {
+  h1, h2, h3, .kicker, .finding-no, .section-head { break-after: avoid; page-break-after: avoid; }
+  .meta, .meta .chip,
+  .summary-grid .card, .scenario-grid .card, .lesson-grid .card,
+  .flow .step, .finding-head, .severity-panel, .why, .root-rec,
+  .smallcard, .priority, .video-wrap, .image-evidence, .caption,
+  .formula, .scorebox { break-inside: avoid; page-break-inside: avoid; }
+  .evidence { break-inside: avoid; page-break-inside: avoid; }
+  .summary-grid, .scenario-grid, .lesson-grid, .flow, .method, .root-rec { break-inside: auto; }
+}
+
+</style>
 </head>
-<body>
-</body>
+<body><svg aria-hidden="true" class="icon-sprite" focusable="false" xmlns="http://www.w3.org/2000/svg">
+<symbol id="i-layers" viewbox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5"></path><path d="m3 17 9 5 9-5"></path></symbol>
+<symbol id="i-user" viewbox="0 0 24 24"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></symbol>
+<symbol id="i-id-card" viewbox="0 0 24 24"><rect height="14" rx="2" width="18" x="3" y="5"></rect><circle cx="8.5" cy="12" r="2.5"></circle><path d="M14 10h4M14 14h4"></path></symbol>
+<symbol id="i-graduation" viewbox="0 0 24 24"><path d="m22 10-10-5L2 10l10 5 10-5Z"></path><path d="M6 12v5c3 2.5 9 2.5 12 0v-5M22 10v6"></path></symbol>
+<symbol id="i-book" viewbox="0 0 24 24"><path d="M12 7v14"></path><path d="M3 18V5c3-1 6-1 9 2 3-3 6-3 9-2v13c-3-1-6-1-9 2-3-3-6-3-9-2Z"></path></symbol>
+<symbol id="i-layers-small" viewbox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5"></path><path d="m3 17 9 5 9-5"></path></symbol>
+<symbol id="i-file-check" viewbox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="m9 15 2 2 4-4"></path></symbol>
+<symbol id="i-list-check" viewbox="0 0 24 24"><path d="M11 5h10M11 12h10M11 19h10"></path><path d="m3 5 1.5 1.5L7 4M3 12l1.5 1.5L7 11M3 19l1.5 1.5L7 18"></path></symbol>
+<symbol id="i-shield-check" viewbox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"></path><path d="m9 12 2 2 4-4"></path></symbol>
+<symbol id="i-eye" viewbox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
+<symbol id="i-alert" viewbox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"></path><path d="M12 9v4M12 17h.01"></path></symbol>
+<symbol id="i-play" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="m10 8 5 4-5 4z"></path></symbol>
+<symbol id="i-chart" viewbox="0 0 24 24"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-4 4"></path></symbol>
+<symbol id="i-git-branch" viewbox="0 0 24 24"><circle cx="6" cy="3" r="2"></circle><circle cx="6" cy="21" r="2"></circle><circle cx="18" cy="6" r="2"></circle><path d="M6 5v14M18 8a6 6 0 0 1-6 6H6"></path></symbol>
+<symbol id="i-lightbulb" viewbox="0 0 24 24"><path d="M9 18h6M10 22h4M8 14a7 7 0 1 1 8 0c-1 .8-1 2-1 3h-6c0-1 0-2.2-1-3Z"></path></symbol>
+<symbol id="i-arrow-up" viewbox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"></path></symbol>
+</svg><header class="site-header"><div class="header-inner"><a class="site-brand" href="#overview"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-layers"></use></svg><b>ROHIT SAI G · COURSE PROJECT</b><span>Heuristic Evaluation · Part B</span></a><nav aria-label="Primary navigation" class="global-nav"><a href="#overview">Overview</a><a href="#executive-summary">Summary</a><a href="#scope">Scope</a><a href="#research">Research</a><a href="#method">Method</a><a href="#findings">Findings</a><a href="#priority">Priority</a><a href="#reflection">Reflection</a><a href="#timeline">Timeline</a><a href="#sources">Sources</a></nav></div></header>
+<div class="page"><main>
+<section class="hero" id="overview">
+<div class="eyebrow">M.Des. · User Experience · Course Assignment · Part B</div>
+<h1>DocIndia.org — Heuristic Evaluation</h1>
+<p class="lede">A focused evaluation of DocIndia’s two patient-facing routes: <b>finding a doctor</b> and <b>booking an appointment</b>. Ten findings document breakdowns across search, refinement, doctor comparison, consultation-mode selection and symptom-led discovery, supported by interaction videos and a results-filter screenshot.</p>
+<div class="meta"><div class="chip"><span class="meta-label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-user"></use></svg> Name</span><span class="meta-value">Rohit Sai G</span></div><div class="chip"><span class="meta-label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-id-card"></use></svg> Student ID</span><span class="meta-value">25080038</span></div><div class="chip"><span class="meta-label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-graduation"></use></svg> Programme</span><span class="meta-value">Master of Design in User Experience</span></div><div class="chip"><span class="meta-label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-book"></use></svg> Course</span><span class="meta-value">Pragmatic UX Product Critique: Heuristics to Audit Reporting</span></div><div class="chip"><span class="meta-label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-layers-small"></use></svg> Module</span><span class="meta-value">Heuristic Evaluation · Part B</span></div><div class="chip"><span class="meta-label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-file-check"></use></svg> Submission</span><span class="meta-value">Heuristic Evaluation Report · Part B</span></div></div>
+<div class="hero-actions"><a class="btn primary" href="https://www.docindia.org/" rel="noopener" target="_blank">Open DocIndia ↗</a><a class="btn" href="#findings">Jump to findings ↓</a></div>
+</section>
+
+<section class="section" id="executive-summary">
+<div class="section-head"><div><div class="kicker">01 / Executive Summary</div><h2>What the evaluation found</h2><p class="section-sub">This review follows the patient journey from doctor discovery through appointment selection and booking feedback, rather than judging isolated screens alone.</p></div></div>
+<p class="section-sub" style="max-width:100%;margin:0 0 24px">The evaluation identified ten usability findings across search input constraints, filter interaction, access to refinements, availability visibility, state restoration, profile information hierarchy, consultation-mode selection and symptom-led matching. After severity calibration, five findings are rated Major and five Workaround. No finding is rated Critical because the observed problems generally allow a user to recover, retry or choose another route, although they may add effort or uncertainty.</p>
+<div class="summary-grid three">
+<div class="card"><h3>Highest task risks</h3><p>Appointment availability is not surfaced early enough; an explicit online-consultation choice is not preserved into the profile; and patients cannot refine results by language.</p></div>
+<div class="card"><h3>Pattern across the journey</h3><p>Users are asked to infer hidden constraints, repeat selections or inspect multiple profiles for decision-critical information that could be made more explicit.</p></div>
+<div class="card"><h3>Evidence and limits</h3><p>Dynamic behaviours are supported by short recordings. The language-filter finding uses a screenshot of the inspected filter state. The symptom-order finding documents different outputs in one controlled comparison, not medical correctness or universal behaviour.</p></div>
+</div>
+</section>
+<section class="section" id="scope">
+<div class="section-head"><div><div class="kicker">02 / Scope &amp; Scenarios</div><h2>One task, two realistic routes</h2><p class="section-sub">The evaluation is intentionally bounded to the user journey required by the assignment. Other DocIndia areas are excluded unless they directly affect these two flows.</p></div></div>
+<div class="summary-grid">
+<div class="card"><h3>Primary scope</h3><p><strong>Find a doctor → evaluate fit → check availability → select appointment option → complete/request booking → understand final status.</strong></p></div>
+<div class="card"><h3>Out of scope</h3><p>Doctor-side workflows, provider subscriptions, general content areas and unrelated product journeys are not evaluated here.</p></div>
+</div>
+<div class="scenario-grid">
+<div class="card"><h3>Scenario A — I know the speciality</h3><p><strong>Context:</strong> A patient knows the required specialty and locality and needs to compare suitable doctors.</p><p><strong>Goal:</strong> Find a doctor who meets their practical requirements and has a usable appointment option.</p><p><strong>Action:</strong> Search by specialty and location → refine results → compare credentials, fee and consultation options → inspect availability → select a slot → confirm the booking state.</p></div>
+<div class="card"><h3>Scenario B — I don't know the speciality</h3><p><strong>Context:</strong> A patient has one or more health concerns but is unsure which specialty to search for.</p><p><strong>Goal:</strong> Understand the suggested route to care, assess suitable doctors and proceed with a booking.</p><p><strong>Action:</strong> Describe the concern → review the specialty recommendation → compare suggested doctors → inspect consultation options and availability → book.</p></div>
+</div>
+
+<div class="card scenario-full"><h3>Scenario C — Time-constrained booking</h3><p><strong>Context:</strong> A patient needs an appointment within a practical time window and wants to avoid spending time on doctors who cannot see them soon.</p><p><strong>Goal:</strong> Find a suitable doctor with near-term availability and complete the booking with confidence.</p><p><strong>Action:</strong> Search and refine results → compare doctor fit → identify the next available slot → choose online or in-clinic consultation → submit booking details → verify confirmation.</p></div>
+<div class="flow">
+<div class="step"><div class="num">01</div><strong>Need</strong><span>A healthcare need arises.</span></div>
+<div class="step"><div class="num">02</div><strong>Discover</strong><span>Search or use symptom-led discovery.</span></div>
+<div class="step"><div class="num">03</div><strong>Evaluate</strong><span>Compare doctor fit, mode, fee and availability.</span></div>
+<div class="step"><div class="num">04</div><strong>Select</strong><span>Choose consultation mode/date/slot.</span></div>
+<div class="step"><div class="num">05</div><strong>Book</strong><span>Enter required details and submit.</span></div>
+<div class="step"><div class="num">06</div><strong>Confirm</strong><span>Understand whether the request is complete.</span></div>
+</div>
+</section>
+
+<section class="section" id="research">
+<div class="section-head"><div><div class="kicker">03 / Research &amp; Product Understanding</div><h2>What the product promises, and what the evaluation tests</h2><p class="section-sub">Secondary research establishes the intended discovery and booking model. The findings below come from observed walkthroughs; product-page claims are treated as positioning, not independently verified outcomes.</p></div></div>
+<div class="summary-grid three">
+<div class="card"><h3>Doctor discovery</h3><p>DocIndia’s homepage presents search by doctor name, specialty and city/locality, alongside online consultation. It also positions profile comparison, ratings and booking as part of the patient journey.</p><p style="margin-top:12px"><a href="https://www.docindia.org/" target="_blank" rel="noopener">Source: DocIndia homepage ↗</a></p></div>
+<div class="card"><h3>Symptom-led route</h3><p>The Find a Doctor page describes entering a health concern, receiving an automatically matched specialty and then browsing doctors. F10 tests the predictability of this route when the same concerns are reordered; it does not assess clinical correctness.</p><p style="margin-top:12px"><a href="https://www.docindia.org/doctors" target="_blank" rel="noopener">Source: Find a Doctor ↗</a></p></div>
+<div class="card"><h3>Trust and booking</h3><p>How DocIndia Works describes doctor verification, slot selection and upfront fee information as parts of booking. This informs the evaluation of credentials, availability, consultation mode, fee and confirmation as decision-relevant parts of the task.</p><p style="margin-top:12px"><a href="https://www.docindia.org/how-it-works" target="_blank" rel="noopener">Source: How DocIndia Works ↗</a></p></div>
+</div>
+<div class="footer-note"><b>Evaluation implication:</b> the product’s stated flow is search or describe a concern → assess a doctor → choose an appointment option and slot → book. The review is scoped to that journey and does not evaluate clinical quality or determine whether a particular specialist recommendation is medically correct. The scenarios are evaluator-defined task scenarios, not findings from participant interviews. Root-cause statements are design-level explanations inferred from observed behaviour; the site’s underlying implementation was not inspected.</div>
+</section>
+<section class="section" id="method">
+<div class="section-head"><div><div class="kicker">04 / Evaluation Method</div><h2>How severity is calculated</h2><p class="section-sub">The course framework uses a NASA risk-matrix-inspired approach. Probability describes how likely the issue is to occur in the evaluated flow; Impact describes how much it affects the user's ability to complete the task.</p></div></div>
+<div class="method">
+<div class="formula"><div class="big">Severity = Probability + Impact − 1</div><p>1 Cosmetic · 2 Irritant · 3 Workaround · 4 Major · 5 Critical</p></div>
+<div class="card"><h3>Evidence standard</h3><p>Each finding is tied to a specific interaction or visible state. Video evidence is provided as separate files in the adjacent media folder for F01–F08 and F10; F09 uses a results-page screenshot because the issue is the absence of a language filter, not a dynamic interaction.</p><div class="scorebox" style="margin-top:12px"><span class="badge critical">5 · Critical</span><span class="badge major">4 · Major</span><span class="badge work">3 · Workaround</span></div></div>
+</div>
+<div aria-label="Severity matrix" class="severity-table">
+<div class="head">Probability \ Impact</div><div class="head">Low · 1</div><div class="head">Medium · 2</div><div class="head">High · 3</div>
+<div class="head">Low · 1</div><div class="sev-cosmetic">1 · Cosmetic</div><div class="sev-irritant">2 · Irritant</div><div class="sev-work">3 · Workaround</div>
+<div class="head">Medium · 2</div><div class="sev-irritant">2 · Irritant</div><div class="sev-work">3 · Workaround</div><div class="sev-major">4 · Major</div>
+<div class="head">High · 3</div><div class="sev-work">3 · Workaround</div><div class="sev-major">4 · Major</div><div class="sev-critical">5 · Critical</div>
+</div>
+</section>
+<section class="section" id="findings">
+<div class="findings-layout"><aside aria-label="Evidence index" class="evidence-index"><div class="index-label">Evidence index</div><nav><a aria-label="F01 · Suggestion-only search input" data-finding="f01" href="#f01" title="F01 · Suggestion-only search input"><span class="idx">F01</span><span><b>Suggestion-only search input</b><small>MAJOR · 4</small></span></a><a aria-label="F02 · Filter CTA says Search" data-finding="f02" href="#f02" title="F02 · Filter CTA says Search"><span class="idx">F02</span><span><b>Filter CTA says Search</b><small>WORKAROUND · 3</small></span></a><a aria-label="F03 · Sticky filter cannot scroll independently" data-finding="f03" href="#f03" title="F03 · Sticky filter cannot scroll independently"><span class="idx">F03</span><span><b>Sticky filter cannot scroll independently</b><small>WORKAROUND · 3</small></span></a><a aria-label="F04 · Availability hidden until doctor profile" data-finding="f04" href="#f04" title="F04 · Availability hidden until doctor profile"><span class="idx">F04</span><span><b>Availability hidden until doctor profile</b><small>MAJOR · 4</small></span></a><a aria-label="F05 · Back returns to changed search state" data-finding="f05" href="#f05" title="F05 · Back returns to changed search state"><span class="idx">F05</span><span><b>Back returns to changed search state</b><small>MAJOR · 4</small></span></a><a aria-label="F06 · Doctor information is fragmented" data-finding="f06" href="#f06" title="F06 · Doctor information is fragmented"><span class="idx">F06</span><span><b>Doctor information is fragmented</b><small>WORKAROUND · 3</small></span></a><a aria-label="F07 · Selected consultation mode is not preserved" data-finding="f07" href="#f07" title="F07 · Selected consultation mode is not preserved"><span class="idx">F07</span><span><b>Consultation mode resets</b><small>MAJOR · 4</small></span></a><a aria-label="F08 · Change clinic mislabels consultation selector" data-finding="f08" href="#f08" title="F08 · Change clinic mislabels consultation selector"><span class="idx">F08</span><span><b>Misleading “Change clinic” label</b><small>WORKAROUND · 3 · PROVISIONAL</small></span></a><a aria-label="F09 · No language filter" data-finding="f09" href="#f09" title="F09 · No language filter"><span class="idx">F09</span><span><b>No language filter</b><small>MAJOR · 4</small></span></a><a aria-label="F10 · Symptom-order changes the recommended specialty" data-finding="f10" href="#f10" title="F10 · Symptom-order changes the recommended specialty"><span class="idx">F10</span><span><b>Symptom order changes recommendation</b><small>WORKAROUND · 3</small></span></a></nav></aside><div class="findings-main"><div class="findings-intro-grid"><div class="section-head"><div><div class="kicker">05 / Findings</div><h2>Ten documented findings</h2><p class="section-sub">The six baseline findings remain intact. F07 documents a consultation-mode reset, F08 documents misleading selector microcopy, F09 documents the missing language filter, and F10 documents an order-sensitive symptom-finder recommendation. Video evidence is linked from the adjacent media folder for F01–F08 and F10; F09 uses the results screenshot.</p></div></div></div><article class="finding" id="f01">
+<div class="finding-head"><div><div class="finding-no">F01 · Search interaction</div><h3>The search fields look like free text, but only DocIndia's suggestions are accepted.</h3><p class="finding-intro">A user can type a city/speciality value — including a value already recognised by the operating system — but the search does not proceed unless the user selects DocIndia's own suggestion.</p></div><div class="severity-panel"><div class="metric"><div class="n">3</div><div class="l">Probability</div></div><div class="metric"><div class="n">2</div><div class="l">Impact</div></div><div class="metric severity-cell major"><div class="severity-value"><div class="n">4</div><span class="severity-badge major">Major</span></div><div class="l">Severity</div></div></div></div>
+<div class="finding-copy"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-shield-check"></use></svg>Heuristic</div><p><strong>Error Prevention</strong></p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-eye"></use></svg>Observed behaviour</div><p>The input visually behaves like a normal text field. When a user types “Hyderabad” or pastes pre-filled address data, the value can look complete, but submission still requires a selection from the platform's suggestion list.</p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-alert"></use></svg>Why it violates the heuristic</div><p>The interface lets the user discover the input constraint only at the moment of submission. The valid interaction model should be evident before the user commits to the search.</p><div class="why why-major"><div class="why-head"><span class="why-heading"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-chart"></use></svg>Severity reasoning</span><span class="severity-badge major">4 · Major</span></div><p>Probability 3 + Impact 2 − 1 = <strong>4</strong>.</p></div><div class="root-rec"><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-git-branch"></use></svg>Root cause</h4><p>The visual affordance suggests open text entry while the underlying search model is suggestion-selection based.</p></div><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-lightbulb"></use></svg>Recommendation</h4><p>Make the selection requirement explicit before submission, or support free-text values consistently. Disable/annotate the CTA until a valid suggestion is selected.</p></div></div></div><div class="evidence"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-play"></use></svg>Interaction evidence</div><div class="video-wrap"><video aria-label="F01 search suggestion required" controls="" playsinline="" preload="metadata" poster="media/F01_poster.jpg" muted src="media/F01_search_suggestion_required.mp4"></video><div class="caption"><b>F01 · Search suggestion requirement</b><span>Click video to play/pause</span></div></div></div></article><article class="finding" id="f02">
+<div class="finding-head"><div><div class="finding-no">F02 · Filter interaction</div><h3>The filter CTA says “Search” even though the user is already on the search-results page.</h3><p class="finding-intro">After selecting or changing filters, the action is still presented as a generic Search CTA. The interface also does not clearly communicate a “changed → ready to apply” state.</p></div><div class="severity-panel"><div class="metric"><div class="n">3</div><div class="l">Probability</div></div><div class="metric"><div class="n">1</div><div class="l">Impact</div></div><div class="metric severity-cell work"><div class="severity-value"><div class="n">3</div><span class="severity-badge work">Workaround</span></div><div class="l">Severity</div></div></div></div>
+<div class="finding-copy"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-shield-check"></use></svg>Heuristic</div><p><strong>Match Between System &amp; Real World</strong> · Secondary: <strong>Visibility of System Status</strong></p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-eye"></use></svg>Observed behaviour</div><p>The user is refining an existing results set, but the CTA still says “Search”. The wording does not communicate that filters will be applied to the current result context, and the button's visual state remains continuously prominent.</p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-alert"></use></svg>Why it violates the heuristic</div><p>“Apply filters” better matches the user's mental model for modifying an existing result set. The lack of a clear state change also weakens feedback about when a filter change is ready to be applied.</p><div class="why why-work"><div class="why-head"><span class="why-heading"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-chart"></use></svg>Severity reasoning</span><span class="severity-badge work">3 · Workaround</span></div><p>The wording is encountered during refinement (Probability 3), but the button still performs the intended action and users can recover from the ambiguity (Impact 1). 3 + 1 − 1 = <strong>3</strong>.</p></div><div class="root-rec"><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-git-branch"></use></svg>Root cause</h4><p>The filter component reuses the search action semantics instead of modelling filtering as a separate refinement step.</p></div><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-lightbulb"></use></svg>Recommendation</h4><p>Rename the CTA to “Apply filters”, visually distinguish its ready state, and only emphasise it after the user changes a filter.</p></div></div></div><div class="evidence"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-play"></use></svg>Interaction evidence</div><div class="video-wrap"><video aria-label="F02 filter Search CTA" controls="" playsinline="" preload="metadata" poster="media/F02_poster.jpg" muted src="media/F02_filter_search_cta.mp4"></video><div class="caption"><b>F02 · Filter CTA semantics</b><span>Click video to play/pause</span></div></div></div></article><article class="finding" id="f03">
+<div class="finding-head"><div><div class="finding-no">F03 · Filter layout</div><h3>The sticky filter panel cannot be scrolled independently.</h3><p class="finding-intro">The left filter rail stays visually persistent while the doctor results scroll, but pointing at the filter area and scrolling still moves the results. Lower shortcut filters remain hidden until the results reach the lower boundary.</p></div><div class="severity-panel"><div class="metric"><div class="n">2</div><div class="l">Probability</div></div><div class="metric"><div class="n">2</div><div class="l">Impact</div></div><div class="metric severity-cell work"><div class="severity-value"><div class="n">3</div><span class="severity-badge work">Workaround</span></div><div class="l">Severity</div></div></div></div>
+<div class="finding-copy"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-shield-check"></use></svg>Heuristic</div><p><strong>Flexibility &amp; Efficiency of Use</strong></p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-eye"></use></svg>Observed behaviour</div><p>The panel is designed to remain sticky, but its content extends beyond the visible region. The user cannot naturally scroll within the panel to reach lower shortcuts such as specialty and city options.</p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-alert"></use></svg>Why it violates the heuristic</div><p>The design creates a persistent control surface without preserving efficient access to all controls contained inside it. For users who want to exploit specialty shortcuts, discovering those options requires an indirect scroll path.</p><div class="why why-work"><div class="why-head"><span class="why-heading"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-chart"></use></svg>Severity reasoning</span><span class="severity-badge work">3 · Workaround</span></div><p>the condition appears when users need lower filters (Probability 2) + can obstruct efficient discovery/refinement (Impact 2) − 1 = <strong>3</strong>.</p></div><div class="root-rec"><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-git-branch"></use></svg>Root cause</h4><p>The sticky container lacks an independent overflow/scroll model for its own content.</p></div><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-lightbulb"></use></svg>Recommendation</h4><p>Allow independent panel scrolling or redesign the filter rail so all high-value controls remain reachable without depending on results-page position.</p></div></div></div><div class="evidence"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-play"></use></svg>Interaction evidence</div><div class="video-wrap"><video aria-label="F03 sticky filter scroll" controls="" playsinline="" preload="metadata" poster="media/F03_poster.jpg" muted src="media/F03_sticky_filter_scroll.mp4"></video><div class="caption"><b>F03 · Sticky filter scroll behaviour</b><span>Click video to play/pause</span></div></div></div></article><article class="finding" id="f04">
+<div class="finding-head"><div><div class="finding-no">F04 · Doctor selection</div><h3>Search results do not show the next available appointment before the user opens a doctor profile.</h3><p class="finding-intro">The user has to open a doctor profile and enter the consultation context to inspect usable dates and times. This can require repeated profile visits when comparing doctors against a time constraint.</p></div><div class="severity-panel"><div class="metric"><div class="n">3</div><div class="l">Probability</div></div><div class="metric"><div class="n">2</div><div class="l">Impact</div></div><div class="metric severity-cell major"><div class="severity-value"><div class="n">4</div><span class="severity-badge major">Major</span></div><div class="l">Severity</div></div></div></div>
+<div class="finding-copy"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-shield-check"></use></svg>Heuristic</div><p><strong>Visibility of System Status</strong> · Secondary: <strong>Flexibility &amp; Efficiency of Use</strong></p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-eye"></use></svg>Observed behaviour</div><p>The search result card can still attract the user's attention as a viable option. The search result card does not surface the next available date/time. Users discover the actual slot situation only after opening the doctor flow and selecting the relevant consultation context.</p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-alert"></use></svg>Why it violates the heuristic</div><p>Availability is decision-critical information in an appointment task. Hiding it until after profile exploration creates avoidable backtracking and weakens the system's communication of current booking state.</p><div class="why why-critical"><div class="why-head"><span class="why-heading"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-chart"></use></svg>Severity reasoning</span><span class="severity-badge critical">4 · Major</span></div><p>Availability is important to choosing a viable doctor (Probability 3), but users can return to results and compare another profile (Impact 2). 3 + 2 − 1 = <strong>4</strong>.</p></div><div class="root-rec"><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-git-branch"></use></svg>Root cause</h4><p>Result cards prioritise doctor discovery/credibility information without surfacing the booking constraint that determines immediate task viability.</p></div><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-lightbulb"></use></svg>Recommendation</h4><p>Show the next available date/time on the result card where possible. If no slot is available within the relevant search window, state that explicitly and offer an availability refinement such as “Available this week”.</p></div></div></div><div class="evidence"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-play"></use></svg>Interaction evidence</div><div class="video-wrap"><video aria-label="F04 availability hidden until profile" controls="" playsinline="" preload="metadata" poster="media/F04_poster.jpg" muted src="media/F04_availability_hidden_until_profile.mp4"></video><div class="caption"><b>F04 · Availability revealed inside profile</b><span>Click video to play/pause</span></div></div></div></article><article class="finding" id="f05">
+<div class="finding-head"><div><div class="finding-no">F05 · Navigation state</div><h3>Back navigation returns the user to a materially changed search/filter state.</h3><p class="finding-intro">After opening a doctor and returning, the results context does not look/behave like the state the user just left: filter presentation and sorting placement change.</p></div><div class="severity-panel"><div class="metric"><div class="n">2</div><div class="l">Probability</div></div><div class="metric"><div class="n">3</div><div class="l">Impact</div></div><div class="metric severity-cell major"><div class="severity-value"><div class="n">4</div><span class="severity-badge major">Major</span></div><div class="l">Severity</div></div></div></div>
+<div class="finding-copy"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-shield-check"></use></svg>Heuristic</div><p><strong>Consistency &amp; Standards</strong> · Secondary: <strong>User Control &amp; Freedom</strong></p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-eye"></use></svg>Observed behaviour</div><p>The initial results view places sorting separately from the left-side filters. After returning from a doctor profile, the visible filter/sort structure is materially different, so the user has to reconstruct where controls live.</p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-alert"></use></svg>Why it violates the heuristic</div><p>Back navigation should restore a predictable context. Changing the interaction model after returning weakens continuity and increases the user's need to re-orient.</p><div class="why why-major"><div class="why-head"><span class="why-heading"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-chart"></use></svg>Severity reasoning</span><span class="severity-badge major">4 · Major</span></div><p>the issue appears on a common comparison/backtracking path (Probability 2) + can disrupt task continuity (Impact 3) − 1 = <strong>4</strong>.</p></div><div class="root-rec"><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-git-branch"></use></svg>Root cause</h4><p>Search-state restoration is not preserving the same component configuration or presentation between entry and return.</p></div><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-lightbulb"></use></svg>Recommendation</h4><p>Preserve query, filters, sort order and component state when returning to the results page. Treat Back as restoration of context, not a fresh results state.</p></div></div></div><div class="evidence"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-play"></use></svg>Interaction evidence</div><div class="video-wrap"><video aria-label="F05 back changes results state" controls="" playsinline="" preload="metadata" poster="media/F05_poster.jpg" muted src="media/F05_back_changes_results_state.mp4"></video><div class="caption"><b>F05 · Back navigation state</b><span>Click video to play/pause</span></div></div></div></article><article class="finding" id="f06">
+<div class="finding-head"><div><div class="finding-no">F06 · Doctor profile information</div><h3>The profile shows a language count before revealing the actual languages.</h3><p class="finding-intro">The hero summary communicates a count such as “2 languages”, while the names themselves appear lower in the profile. The information is available, but not at the first comparison point.</p></div><div class="severity-panel"><div class="metric"><div class="n">2</div><div class="l">Probability</div></div><div class="metric"><div class="n">2</div><div class="l">Impact</div></div><div class="metric severity-cell work"><div class="severity-value"><div class="n">3</div><span class="severity-badge work">Workaround</span></div><div class="l">Severity</div></div></div></div>
+<div class="finding-copy"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-shield-check"></use></svg>Heuristic</div><p><strong>Recognition Rather Than Recall</strong> · Secondary: <strong>Aesthetic &amp; Minimalist Design</strong></p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-eye"></use></svg>Observed behaviour</div><p>Above the fold, the profile shows a compact summary such as “2 languages”. The user must later scan to “At a glance” to learn the actual languages, while related information is repeated in a separate visual treatment.</p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-alert"></use></svg>Why it violates the heuristic</div><p>A patient comparing doctors cannot identify language compatibility from the summary count alone and must scroll to another section to discover the actual values. This increases scanning effort; it does not mean the language information is absent from the profile.</p><div class="why why-work"><div class="why-head"><span class="why-heading"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-chart"></use></svg>Severity reasoning</span><span class="severity-badge work">3 · Workaround</span></div><p>users may not need language details on every visit (Probability 2) + the problem adds cognitive/scanning effort without blocking completion (Impact 2) − 1 = <strong>3</strong>.</p></div><div class="root-rec"><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-git-branch"></use></svg>Root cause</h4><p>The hero summary prioritises a compact count over the actual language labels needed for comparison, while the detailed values are placed farther down the profile.</p></div><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-lightbulb"></use></svg>Recommendation</h4><p>Show the actual language labels in the profile summary, or move them beside the count so patients can assess language compatibility without a separate scroll.</p></div></div></div><div class="evidence"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-play"></use></svg>Interaction evidence</div><div class="video-wrap"><video aria-label="F06 fragmented profile language information" controls="" playsinline="" preload="metadata" poster="media/F06_poster.jpg" muted src="media/F06_profile_info_fragmented_languages.mp4"></video><div class="caption"><b>F06 · Language information fragmentation</b><span>Click video to play/pause</span></div></div></div></article><article class="finding" id="f07">
+<div class="finding-head"><div><div class="finding-no">F07 · Consultation-mode state</div><h3>The selected online consultation mode is not preserved when opening the doctor profile.</h3><p class="finding-intro">The doctor result card offers a dedicated “Video Consult” action, but the profile opens with “In-clinic” selected. The user must select Video again before choosing a date and time.</p></div><div class="severity-panel"><div class="metric"><div class="n">2</div><div class="l">Probability</div></div><div class="metric"><div class="n">3</div><div class="l">Impact</div></div><div class="metric severity-cell major"><div class="severity-value"><div class="n">4</div><span class="severity-badge major">Major</span></div><div class="l">Severity</div></div></div></div>
+<div class="finding-copy"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-shield-check"></use></svg>Heuristic</div><p><strong>Consistency &amp; Standards</strong> · Secondary: <strong>Flexibility &amp; Efficiency of Use</strong></p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-eye"></use></svg>Observed behaviour</div><p>From the doctor results list, the user explicitly chooses “Video Consult”. On the profile page, the booking panel defaults to “In-clinic” instead of carrying the choice forward. The user has to repeat the selection to continue with the intended consultation mode.</p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-alert"></use></svg>Why it violates the heuristic</div><p>The action taken on the result card establishes a clear user intention. Resetting that choice during navigation breaks continuity, adds a redundant step and creates a risk that the user may overlook the reset and continue with the wrong consultation mode.</p><div class="why why-major"><div class="why-head"><span class="why-heading"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-chart"></use></svg>Severity reasoning</span><span class="severity-badge major">4 · Major · Provisional</span></div><p>Probability 2 + Impact 3 − 1 = <strong>4</strong>. The recorded interaction confirms the behaviour in this flow. The score assumes the impact of selecting the wrong mode is high; check additional profiles before claiming it is universal.</p></div><div class="root-rec"><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-git-branch"></use></svg>Root cause</h4><p>The consultation-mode choice made in the result card is not carried into the profile's booking state.</p></div><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-lightbulb"></use></svg>Recommendation</h4><p>Pass the selected consultation mode into the doctor profile and preselect the same mode in the booking panel. Keep the alternative available so the user can deliberately change it.</p></div></div></div><div class="evidence"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-play"></use></svg>Interaction evidence</div><div class="video-wrap"><video aria-label="F07 selected consultation mode not preserved" controls playsinline preload="metadata" muted poster="media/F07_poster.jpg" src="media/F07_consultation_mode_not_preserved.mp4"></video><div class="caption"><b>F07 · Consultation mode not preserved</b><span>Click video to play/pause</span></div></div><p class="evidence-note">Shows Video Consult being selected from the results card, followed by the profile opening with In-clinic selected and the user switching to Video again.</p></div></article>
+<article class="finding" id="f08">
+<div class="finding-head"><div><div class="finding-no">F08 · Consultation selector microcopy</div><h3>The label “Change clinic” is misleading when the selector also switches to an online consultation.</h3><p class="finding-intro">On Dr Simran Jeet Singh's profile, the booking panel displays “Change clinic”, but the opened selector contains both an “Online Consultation” option and a physical clinic option. The label does not accurately describe the full set of choices.</p></div><div class="severity-panel"><div class="metric"><div class="n">2</div><div class="l">Probability</div></div><div class="metric"><div class="n">2</div><div class="l">Impact</div></div><div class="metric severity-cell work"><div class="severity-value"><div class="n">3</div><span class="severity-badge work">Workaround</span></div><div class="l">Severity</div></div></div></div>
+<div class="finding-copy"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-shield-check"></use></svg>Heuristic</div><p><strong>Match Between System &amp; Real World</strong> · Secondary: <strong>Consistency &amp; Standards</strong></p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-eye"></use></svg>Observed behaviour</div><p>The current booking option is shown as “Online Consultation”, yet the adjacent control is labelled “Change clinic”. Opening the control reveals an online consultation option alongside a named physical clinic. The label suggests that only the clinic location can change, even though the choice also concerns the consultation option/mode.</p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-alert"></use></svg>Why it violates the heuristic</div><p>The control's wording does not match what the control actually lets the user choose. At a consequential point in booking, this mismatch can make the user hesitate, overlook the online option or misunderstand whether they are changing location or consultation mode.</p><div class="why why-work"><div class="why-head"><span class="why-heading"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-chart"></use></svg>Severity reasoning</span><span class="severity-badge work">3 · Workaround · Provisional</span></div><p>Probability 2 + Impact 2 − 1 = <strong>3</strong>. The wording is misleading, but the opened menu makes the available options clearer. This remains a lower-priority, profile-specific finding rather than a major booking-flow breakdown.</p></div><div class="root-rec"><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-git-branch"></use></svg>Root cause</h4><p>The selector uses “clinic” as the label even though its options represent more than clinic-location changes, including an online consultation.</p></div><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-lightbulb"></use></svg>Recommendation</h4><p>Use a label that reflects the choices available, such as “Change consultation option” or “Change consultation type”. If the control changes both mode and clinic location, the options should also be clearly grouped and labelled.</p></div></div></div><div class="evidence"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-play"></use></svg>Interaction evidence</div><div class="video-wrap"><video aria-label="F08 misleading Change clinic microcopy" controls playsinline preload="metadata" muted poster="media/F08_poster.jpg" src="media/F08_change_clinic_microcopy.mp4"></video><div class="caption"><b>F08 · Misleading “Change clinic” label</b><span>Click video to play/pause</span></div></div><p class="evidence-note">Shows the “Change clinic” control opening a selector that includes both Online Consultation and a physical clinic option.</p></div></article>
+<article class="finding" id="f09">
+<div class="finding-head"><div><div class="finding-no">F09 · Search refinement</div><h3>The doctor-results filters do not let patients narrow results by language.</h3><p class="finding-intro">The inspected results view exposes consultation mode, gender, sort order and specialty shortcuts, but no language-based filter. Patients who need a doctor who speaks a particular language must inspect doctor profiles individually instead of narrowing the results directly.</p></div><div class="severity-panel"><div class="metric"><div class="n">3</div><div class="l">Probability</div></div><div class="metric"><div class="n">2</div><div class="l">Impact</div></div><div class="metric severity-cell major"><div class="severity-value"><div class="n">4</div><span class="severity-badge major">Major</span></div><div class="l">Severity</div></div></div></div>
+<div class="finding-copy"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-shield-check"></use></svg>Heuristic</div><p><strong>Flexibility &amp; Efficiency of Use</strong></p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-eye"></use></svg>Observed behaviour</div><p>The filter panel provides options for consultation mode and gender, sorting choices such as best match, top rated and lowest fee, and specialty shortcuts. No language filter is exposed in the inspected refinement controls. A patient who needs to communicate in a preferred language has to open profiles one by one and look for language details. The existing F06 finding is separate: it concerns language information being fragmented within a profile, while this finding concerns the inability to filter at the results stage.</p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-alert"></use></svg>Why it violates the heuristic</div><p>The system offers only a limited set of refinement paths for a marketplace with varied patient needs. Language may be a practical requirement for understanding symptoms, discussing treatment and feeling comfortable during a consultation. Without a language filter, the user repeats the same profile-inspection task across multiple doctors, increasing effort and making it harder to find an appropriate match efficiently.</p><div class="why why-major"><div class="why-head"><span class="why-heading"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-chart"></use></svg>Severity reasoning</span><span class="severity-badge major">4 · Major</span></div><p>Probability 3 + Impact 2 − 1 = <strong>4</strong>. The impact is moderate because users can still inspect profiles manually, but the repeated effort can become substantial when language is a hard selection constraint, especially when searching outside one's home region.</p></div><div class="root-rec"><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-git-branch"></use></svg>Root cause</h4><p>The results-refinement model does not expose language as a searchable patient-selection attribute, leaving users to discover it through individual profile inspection.</p></div><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-lightbulb"></use></svg>Recommendation</h4><p>Add a searchable, multi-select language filter and show the selected language as an active filter. Let users combine language with specialty, consultation mode and location so results can be narrowed to doctors who meet their communication needs.</p></div></div></div>
+<div class="evidence"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-play"></use></svg>Visual evidence</div><div class="image-evidence"><img src="media/F09_language_filter_evidence.jpg" alt="DocIndia doctor-search results page. The visible filter panel shows Consultation options, Gender options, Sort By options and specialty shortcuts, without a language filter."/><div class="caption"><b>F09 · Language filter absent from the inspected results controls</b><span>Static screenshot evidence</span></div></div><p style="margin:12px 0 0;color:var(--muted);font-size:13px;line-height:1.7">Evidence note: this screenshot documents the refinement controls visible in the inspected search state. The absence of a language filter is based on the filter-panel walkthrough; the screenshot is suitable here because the finding concerns a missing control, not a dynamic interaction.</p></div>
+</article>
+<article class="finding" id="f10">
+<div class="finding-head"><div><div class="finding-no">F10 · Symptom-led discovery</div><h3>The symptom finder changes its recommended specialty when the same symptoms are entered in a different order.</h3><p class="finding-intro">In the recorded comparison, “dry flaky skin, hair fall, weakness” leads to Dermatology, while “weakness, hair fall, dry flaky skin” leads to Internal medicine. The symptom set is the same; only its order changes. This demonstrates order-sensitive output in this test, not that either specialty recommendation is medically incorrect.</p></div><div class="severity-panel"><div class="metric"><div class="n">2</div><div class="l">Probability</div></div><div class="metric"><div class="n">2</div><div class="l">Impact</div></div><div class="metric severity-cell work"><div class="severity-value"><div class="n">3</div><span class="severity-badge work">Workaround</span></div><div class="l">Severity</div></div></div></div>
+<div class="finding-copy"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-shield-check"></use></svg>Heuristic</div><p><strong>Consistency &amp; Standards</strong> · Secondary: <strong>Match Between System &amp; Real World</strong></p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-eye"></use></svg>Observed behaviour</div><p>The symptom finder invites users to describe a health concern and offers to match them to a specialist. In two recorded runs with the same three symptoms, changing their order changes the displayed specialty recommendation from Dermatology to Internal medicine. The interface does not explain how it weighs or interprets multiple concerns, or whether their order affects the result.</p><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-alert"></use></svg>Why it violates the heuristic</div><p>The same symptom set is entered in two different orders, yet the recommended specialty changes and the interface provides no explanation that input order affects the result. This undermines consistency and predictability. It also weakens the match between the patient's real-world concern and the system's response. The finding concerns interaction behaviour, not the medical correctness of either recommendation.</p><div class="why why-work"><div class="why-head"><span class="why-heading"><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-chart"></use></svg>Severity reasoning</span><span class="severity-badge work">3 · Workaround</span></div><p>Probability 2 + Impact 2 − 1 = <strong>3</strong>. The change is directly demonstrated in this controlled comparison, but its frequency across other symptom combinations is not established. Users can still search for a specialty directly, so the issue creates uncertainty and a workaround rather than proving that the task is blocked.</p></div><div class="root-rec"><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-git-branch"></use></svg>Root cause</h4><p>The finder presents a single specialty recommendation without explaining which symptoms drove the match or how multiple concerns are interpreted.</p></div><div class="smallcard"><h4><svg aria-hidden="true" class="icon" focusable="false"><use href="#i-lightbulb"></use></svg>Recommendation</h4><p>Represent multiple symptoms as separately identifiable inputs, let users indicate a primary concern when relevant, and explain which inputs informed the recommendation. If concerns point to different specialties, communicate that uncertainty instead of presenting an unexplained result.</p></div></div></div>
+<div class="evidence"><div class="label"><svg aria-hidden="true" class="icon icon-xs" focusable="false"><use href="#i-play"></use></svg>Interaction evidence</div><div class="video-wrap"><video aria-label="F10 symptom order changes specialist recommendation" controls playsinline preload="metadata" muted poster="media/F10_poster.jpg" src="media/F10_symptom_order_comparison.mp4"></video><div class="caption"><b>F10 · Same symptoms, different order, different specialty</b><span>22.8-second comparison · muted</span></div></div><p class="evidence-note">The comparison establishes order-sensitive output for this test. It does not establish that either recommendation is clinically incorrect or that the same behaviour occurs with every symptom combination.</p></div>
+</article>
+</div></div></section>
+<section class="section" id="priority">
+<div class="section-head"><div><div class="kicker">06 / Prioritisation</div><h2>What should be fixed first?</h2><p class="section-sub">Severity is used to prioritise by task consequence. After severity calibration, five findings are rated Major and five are rated Workaround; none is labelled Critical. F07 and F08 include scope caveats; F10 records order-sensitive output in the tested comparison without claiming clinical error.</p></div></div>
+<div class="priority-list">
+<div class="priority"><div class="rank">01</div><div><b>Surface availability earlier</b><span>F04 · booking availability is essential to deciding which doctor to pursue</span></div><span class="severity-badge major">4 · Major</span></div>
+<div class="priority"><div class="rank">02</div><div><b>Preserve the selected consultation mode</b><span>F07 · carry the user's Video Consult choice into the profile</span></div><span class="severity-badge major">4 · Major · Provisional</span></div>
+<div class="priority"><div class="rank">03</div><div><b>Enable language-based refinement</b><span>F09 · reduces repeated profile checks when language is a patient requirement</span></div><span class="severity-badge major">4 · Major</span></div>
+<div class="priority"><div class="rank">04</div><div><b>Restore search context on Back</b><span>F05 · protects continuity when comparing doctors</span></div><span class="severity-badge major">4 · Major</span></div>
+<div class="priority"><div class="rank">05</div><div><b>Clarify search-entry rules</b><span>F01 · prevents avoidable failed submissions</span></div><span class="severity-badge major">4 · Major</span></div>
+<div class="priority"><div class="rank">06</div><div><b>Make filter application explicit</b><span>F02 · improves refinement feedback and action clarity</span></div><span class="severity-badge work">3 · Workaround</span></div>
+<div class="priority"><div class="rank">07</div><div><b>Make the sticky filter independently usable</b><span>F03 · restores access to lower filter shortcuts</span></div><span class="severity-badge work">3 · Workaround</span></div>
+<div class="priority"><div class="rank">08</div><div><b>Clarify multi-symptom matching behaviour</b><span>F10 · same symptom set produces a different recommendation when reordered</span></div><span class="severity-badge work">3 · Workaround</span></div>
+<div class="priority"><div class="rank">09</div><div><b>Correct the consultation selector label</b><span>F08 · “Change clinic” does not describe online and in-clinic choices</span></div><span class="severity-badge work">3 · Workaround · Provisional</span></div>
+<div class="priority"><div class="rank">10</div><div><b>Consolidate doctor summary information</b><span>F06 · reduces scanning and recall burden</span></div><span class="severity-badge work">3 · Workaround</span></div>
+</div>
+<div class="footer-note"><b>Interpretation note:</b> F10 documents a repeatable difference across two runs with the same symptoms reordered. It does not assert a clinical error. The severity reflects the demonstrated interaction and the limited scope of the current test.</div>
+</section>
+<section class="section" id="reflection">
+<div class="section-head"><div><div class="kicker">07 / Reflection</div><h2>Lessons from the evaluation</h2></div></div>
+<div class="lesson-grid">
+<div class="card"><h3>Evaluate the journey, not isolated screens</h3><p>Problems became more consequential when the sequence from search to booking was followed rather than judging a screen in isolation.</p></div>
+<div class="card"><h3>Availability is decision information</h3><p>In appointment products, “can I actually book this doctor soon?” is part of doctor discovery—not only a detail inside the profile.</p></div>
+<div class="card"><h3>State restoration matters</h3><p>Back navigation is part of the task experience. Returning users should not have to re-learn the results interface.</p></div>
+<div class="card"><h3>Severity needs consequence, not annoyance</h3><p>The course framework makes prioritisation defensible by separating likelihood from task impact.</p></div>
+<div class="card"><h3>Evidence should show behaviour</h3><p>Short interaction clips communicate a heuristic problem more directly than static screenshots for dynamic interactions.</p></div>
+<div class="card"><h3>Scope discipline improves quality</h3><p>Keeping the evaluation limited to doctor discovery and booking makes the resulting findings easier to defend.</p></div>
+</div>
+</section>
+<section class="section" id="timeline">
+<div class="section-head"><div><div class="kicker">08 / Timeline</div><h2>Evaluation workflow</h2></div></div>
+<div class="flow">
+<div class="step"><div class="num">PHASE 01</div><strong>Scope + context</strong><span>Lock the exact task and scenarios.</span></div>
+<div class="step"><div class="num">PHASE 02</div><strong>Live walkthrough</strong><span>Trace actual user paths through DocIndia.</span></div>
+<div class="step"><div class="num">PHASE 03</div><strong>Evidence capture</strong><span>Record only interaction behaviour that establishes the issue.</span></div>
+<div class="step"><div class="num">PHASE 04</div><strong>Heuristic mapping</strong><span>Identify the principle violated and explain why.</span></div>
+<div class="step"><div class="num">PHASE 05</div><strong>Severity</strong><span>Assign Probability + Impact − 1.</span></div>
+<div class="step"><div class="num">PHASE 06</div><strong>Synthesis</strong><span>Root cause, recommendations and final documentation.</span></div>
+</div>
+</section>
+<section class="section" id="sources">
+<div class="section-head"><div><div class="kicker">09 / Sources</div><h2>Reference points</h2></div></div>
+<div class="summary-grid three">
+<div class="card"><h3>DocIndia Home</h3><p><a href="https://www.docindia.org/" rel="noopener" target="_blank">docindia.org ↗</a></p></div>
+<div class="card"><h3>Find a Doctor</h3><p><a href="https://www.docindia.org/doctors" rel="noopener" target="_blank">docindia.org/doctors ↗</a></p></div>
+<div class="card"><h3>How DocIndia Works</h3><p><a href="https://www.docindia.org/how-it-works" rel="noopener" target="_blank">docindia.org/how-it-works ↗</a></p></div>
+</div>
+<div class="footer-note"><b>Evidence note:</b> F01–F08 and F10 use video files in the adjacent media folder; F09 uses the results-page screenshot in that folder. Keep the media folder at the same path as this HTML so every evidence source resolves.</div>
+</section>
+</main></div>
+<script>
+const topLinks=[...document.querySelectorAll('.global-nav a')];
+const topSections=topLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const topObserver=new IntersectionObserver(entries=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      topLinks.forEach(a=>a.classList.remove('active'));
+      const active=document.querySelector('.global-nav a[href="#'+entry.target.id+'"]');
+      if(active) active.classList.add('active');
+    }
+  });
+},{rootMargin:'-18% 0px -72% 0px',threshold:0});
+topSections.forEach(s=>topObserver.observe(s));
+
+const evidenceLinks=[...document.querySelectorAll('.evidence-index a')];
+const evidenceTargets=evidenceLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const evidenceObserver=new IntersectionObserver(entries=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      evidenceLinks.forEach(a=>a.classList.remove('active'));
+      const active=document.querySelector('.evidence-index a[href="#'+entry.target.id+'"]');
+      if(active) active.classList.add('active');
+    }
+  });
+},{rootMargin:'-20% 0px -65% 0px',threshold:0});
+evidenceTargets.forEach(s=>evidenceObserver.observe(s));
+
+document.querySelectorAll('video').forEach(v=>v.addEventListener('click',()=>{
+  if(v.paused){v.play().catch(()=>{})}else{v.pause()}
+}));
+</script></body>
 </html>
